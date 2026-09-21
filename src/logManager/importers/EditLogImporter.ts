@@ -2,9 +2,33 @@ import { useStore } from "~/store";
 import { CharItem, LogItem, packNameId } from "../types";
 import { LogImporter, TextInfo } from "./_logImpoter";
 
-export const reEditLogTest = /^([^(<\n]+)(\(([^(\n]+)\)|\<[^(\n]+\>)?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?$/m
+// 名字这一组有两种形态：
+//
+//   希亚(12345) 19:33:39      裸名字。原本只认这一种。
+//   <希亚>(12345) 19:33:39    整个名字被尖括号包起来。
+//
+// 第二种来自一个已经修掉的上游 bug：Dice!Next 一度把**回复里**那个带包裹的
+// 显示名（<希亚>）当成名字存进日志并上传。骰子那边改了，但已经传上去的日志
+// 改不了——而名字这一组原本明确排除 `<`，于是那些日志里每一个玩家的行都解析
+// 失败，只剩骰娘自己那行认得出来，七个角色显示成一个。
+//
+// 只在**整行开头**认这种包裹，所以 `希亚<12345> 19:33:39`（名字后面跟尖括号
+// id，本来就支持的写法）不受影响：那一行不以 `<` 开头，走的还是原来那条分支。
+// 捕获到的包裹由 unwrapName 剥掉，否则预览层再包一次就成了 <<希亚>>。
+export const reEditLogTest = /^((?:<[^<>(\n]+>)|[^(<\n]+)(\(([^(\n]+)\)|\<[^(\n]+\>)?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?$/m
 export const reEditLog = new RegExp(reEditLogTest, 'gm')
 
+
+/** 剥掉整个名字外面那层尖括号（见上面正则的注释）。
+ *
+ * 只在首尾成对时才剥：`<希亚>` → `希亚`；`希亚>笑` 这种原样留着。
+ */
+function unwrapName(name: string): string {
+  if (name.length > 2 && name.startsWith('<') && name.endsWith('>')) {
+    return name.slice(1, -1);
+  }
+  return name;
+}
 
 export class EditLogImporter extends LogImporter {
   // TODO 信息等待补充
@@ -43,7 +67,7 @@ export class EditLogImporter extends LogImporter {
         }
 
         const item = {} as LogItem;
-        item.nickname = m[1];
+        item.nickname = unwrapName(m[1]);
         [item.time, item.timeText] = this.parseTime((m[5] || '') + m[6]);
         item.message = '';
         if (m[2]) {
