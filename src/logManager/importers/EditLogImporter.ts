@@ -1,6 +1,7 @@
 import { useStore } from "~/store";
 import { CharItem, LogItem, packNameId } from "../types";
 import { LogImporter, TextInfo } from "./_logImpoter";
+import { reEditLogTest, unwrapName } from "../editLogHeader";
 
 // 名字这一组有两种形态：
 //
@@ -15,20 +16,9 @@ import { LogImporter, TextInfo } from "./_logImpoter";
 // 只在**整行开头**认这种包裹，所以 `希亚<12345> 19:33:39`（名字后面跟尖括号
 // id，本来就支持的写法）不受影响：那一行不以 `<` 开头，走的还是原来那条分支。
 // 捕获到的包裹由 unwrapName 剥掉，否则预览层再包一次就成了 <<希亚>>。
-export const reEditLogTest = /^((?:<[^<>(\n]+>)|[^(<\n]+)(\(([^(\n]+)\)|\<[^(\n]+\>)?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?$/m
+export { reEditLogTest } from "../editLogHeader";
 export const reEditLog = new RegExp(reEditLogTest, 'gm')
 
-
-/** 剥掉整个名字外面那层尖括号（见上面正则的注释）。
- *
- * 只在首尾成对时才剥：`<希亚>` → `希亚`；`希亚>笑` 这种原样留着。
- */
-function unwrapName(name: string): string {
-  if (name.length > 2 && name.startsWith('<') && name.endsWith('>')) {
-    return name.slice(1, -1);
-  }
-  return name;
-}
 
 export class EditLogImporter extends LogImporter {
   // TODO 信息等待补充
