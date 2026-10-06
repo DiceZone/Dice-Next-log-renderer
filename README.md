@@ -27,4 +27,4 @@ pnpm build  # 构建（含类型检查）
 
 ## 致谢
 
-* [sealdice/story-painter](https://github.com/sealdice/story-painter) 及其作者 fy 与所有贡献者
+* [sealdice/story-painter](https://github.com/sealdice/story-painter)
