@@ -10,9 +10,9 @@ import { completeFromList } from "@codemirror/autocomplete"
 import { CharItem } from "~/logManager/types"
 import { Extension } from "@codemirror/state";
 import * as twColors from 'tailwindcss/colors'
-export const reNameLine = /^([^(<\n]+(\((?!\d+\))[^(\n]+\))?)(\(\d+\))?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?/
-// export const reNameLine = /^([^(<\n]+)(\([^(\n]+\)|\<[^(\n]+\>)?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?/
-export const reNameLine2 = /([^(<\n]+)(\([^(\n]+\)|\<[^(\n]+\>)?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?/g
+import { reEditLogTest, unwrapName } from '~/logManager/editLogHeader'
+export const reNameLine = reEditLogTest
+export const reNameLine2 = new RegExp(reEditLogTest, 'gm')
 
 let nameReplace = (n: string) => {
   return n.replaceAll('.', '·').replaceAll(' ', '_').replaceAll(`/`, '_') //.replaceAll('(', '（').replaceAll(')', '）')
@@ -105,8 +105,8 @@ export function generateLang(pcList: CharItem[], options: any = undefined): Exte
         case 0: {
           const m = stream.match(reNameLine) as RegExpMatchArray
           if (m) {
-            const mName = m[1]
-            state.name = nameReplace(m[1])
+            const mName = unwrapName(m[1])
+            state.name = nameReplace(mName)
             state.mode = 1
             const pc = pcMap[mName]
             state.pc = pc
