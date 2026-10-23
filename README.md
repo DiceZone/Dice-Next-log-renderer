@@ -20,7 +20,8 @@ Dice-Next 专属的 TRPG 跑团日志渲染器（着色器）网站。
 ## 开发
 
 ```bash
-pnpm install
+# Node.js >=26.12.1，使用最新 26.x 安全版本
+pnpm install --frozen-lockfile
 pnpm dev    # 开发
 pnpm build  # 构建（含类型检查）
 ```
