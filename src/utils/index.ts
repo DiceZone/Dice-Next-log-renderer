@@ -34,6 +34,15 @@ export function getCanvasFontSize(el = document.body) {
   return `${fontWeight} ${fontSize} ${fontFamily}`;
 }
 
+// 把日志里的图片地址写进 <img src>。传进来的文字只转义过 < > &（见 escapeHTML），
+// 引号还是原样；不处理的话，地址里的引号会提前结束 src 属性，后面的内容就成了新的属性
+// （例如 onerror），任何人上传的日志都能借此在本页执行脚本。
+function imageTag(src: string): string {
+  const attribute = src.replaceAll('"', '&quot;').replaceAll("'", '&#39;')
+    .replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  return `<img style="max-width: 300px" src="${attribute}" />`;
+}
+
 export function msgImageFormat(msg: string, options: any, htmlText = false) {
   // 替换图片、表情
   if (options.imageHide) {
@@ -44,9 +53,9 @@ export function msgImageFormat(msg: string, options: any, htmlText = false) {
       // [CQ:image,summary=[动画表情],...,file_unique=...]
       msg = msg.replaceAll(/\[CQ:image(,summary=\[动画表情\])?,[^\]]+?file_unique=([a-zA-Z0-9]{32})\]/g, '<img style="max-width: 300px" src="https://gchat.qpic.cn/gchatpic_new/0/0-0-$2/0?term=2" crossorigin="anonymous" />')
       // [CQ:image,summary=[动画表情],file=...,url=...]
-      msg = msg.replaceAll(/\[CQ:image,summary=\[动画表情\],[^\]]+?url=([^\]]+)\]/g, '<img style="max-width: 300px" src="$1" />')
+      msg = msg.replaceAll(/\[CQ:image,summary=\[动画表情\],[^\]]+?url=([^\]]+)\]/g, (_match, url: string) => imageTag(url))
       // [CQ:image,file=...,url=...]
-      msg = msg.replaceAll(/\[CQ:image,[^\]]+?url=([^\]]+)\]/g, '<img style="max-width: 300px" src="$1" />')
+      msg = msg.replaceAll(/\[CQ:image,[^\]]+?url=([^\]]+)\]/g, (_match, url: string) => imageTag(url))
       // [CQ:image,file=https?://...]
       msg = msg.replaceAll(/\[CQ:image,file=(https?:\/\/[^\]]+)\]/g, (_match, url: string) => cqImageHtml(url))
       // [CQ:image,file=725BAB58A963A84E1A3BO1F3FCA7F1DF.jpg]
@@ -71,7 +80,7 @@ export function msgImageFormat(msg: string, options: any, htmlText = false) {
     msg = msg.replaceAll(/\[(image|图):[^\]]+\]/g, '')
   } else {
     if (htmlText) {
-      msg = msg.replaceAll(/\[(?:image|图):([^\]]+)?([^\]]+)\]/g, '<img style="max-width: 300px" src="$1" />')
+      msg = msg.replaceAll(/\[(?:image|图):([^\]]+)?([^\]]+)\]/g, (_match, head: string | undefined, tail: string) => imageTag((head || '') + tail))
     }
   }
 
